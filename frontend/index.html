@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealEgo - Login</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; }
+        .login-container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
+        h2 { text-align: center; color: #333; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .error { color: red; font-size: 0.9em; display: none; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>RealEgo Login</h2>
+        <input type="text" id="username" placeholder="Username" value="tera">
+        <input type="password" id="password" placeholder="Password" value="tera">
+        <button onclick="login()">Login</button>
+        <p class="error" id="error-msg"></p>
+    </div>
+
+    <script>
+        const API_URL = ""; // Relative path since served by backend
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch(`${API_URL}/token`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.access_token);
+                    window.location.href = 'home.html';
+                } else {
+                    const err = await response.json();
+                    errorMsg.innerText = err.detail || 'Login failed';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                errorMsg.innerText = 'Connection error (Ensure Backend is running with HTTPS)';
+                errorMsg.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
