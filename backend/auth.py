@@ -7,12 +7,21 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from config import settings
 import models, schemas, database
+import logging
+
+logger = logging.getLogger("RealEgo")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        result = pwd_context.verify(plain_password, hashed_password)
+        logger.debug(f"Password verification result: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"Error verifying password: {e}")
+        return False
 
 def get_password_hash(password):
     return pwd_context.hash(password)
