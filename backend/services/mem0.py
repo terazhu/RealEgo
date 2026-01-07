@@ -1,5 +1,8 @@
 import requests
 from config import settings
+import logging
+
+logger = logging.getLogger("RealEgo")
 
 class Mem0Service:
     def __init__(self):
@@ -20,11 +23,13 @@ class Mem0Service:
             "user_id": str(user_id)
         }
         try:
+            logger.debug(f"Adding memory to Mem0: {url}, data: {data}")
             response = requests.post(url, json=data, headers=self.headers)
             response.raise_for_status()
+            logger.debug(f"Memory added successfully: {response.json()}")
             return response.json()
         except Exception as e:
-            print(f"Error adding memory: {e}")
+            logger.error(f"Error adding memory: {e}")
             return None
 
     def search_memory(self, query: str, user_id: str):
@@ -35,11 +40,14 @@ class Mem0Service:
             "user_id": str(user_id)
         }
         try:
+            logger.debug(f"Searching memory in Mem0: {url}, data: {data}")
             response = requests.post(url, json=data, headers=self.headers)
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            logger.debug(f"Memory search result: {result}")
+            return result
         except Exception as e:
-            print(f"Error searching memory: {e}")
+            logger.error(f"Error searching memory: {e}")
             return []
 
 mem0_service = Mem0Service()
