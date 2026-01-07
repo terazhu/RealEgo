@@ -11,6 +11,7 @@ import logging
 import sys
 import time
 from sqlalchemy.orm import Session
+import auth as auth_utils # Import auth module for password hashing
 
 # Logging Configuration
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
@@ -86,7 +87,10 @@ def init_default_user():
             user_in = schemas.UserCreate(username="tera", password="tera")
             crud.create_user(db, user_in)
         else:
-            logger.info("Default user 'tera' already exists.")
+            logger.info("Default user 'tera' already exists. Resetting password to ensure validity.")
+            hashed_password = auth_utils.get_password_hash("tera")
+            user.hashed_password = hashed_password
+            db.commit()
     except Exception as e:
         logger.error(f"Error initializing user: {e}")
     finally:
