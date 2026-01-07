@@ -81,16 +81,25 @@ async def read_home():
 def init_default_user():
     db = SessionLocal()
     try:
+        logger.debug("Checking for default user 'tera'...")
         user = crud.get_user_by_username(db, "tera")
         if not user:
             logger.info("Creating default user 'tera'")
             user_in = schemas.UserCreate(username="tera", password="tera")
-            crud.create_user(db, user_in)
+            try:
+                crud.create_user(db, user_in)
+                logger.info("Default user 'tera' created successfully.")
+            except Exception as e:
+                logger.error(f"Failed to create default user: {e}")
         else:
             logger.info("Default user 'tera' already exists. Resetting password to ensure validity.")
-            hashed_password = auth_utils.get_password_hash("tera")
-            user.hashed_password = hashed_password
-            db.commit()
+            try:
+                hashed_password = auth_utils.get_password_hash("tera")
+                user.hashed_password = hashed_password
+                db.commit()
+                logger.info("Password for 'tera' reset successfully.")
+            except Exception as e:
+                logger.error(f"Failed to reset password for 'tera': {e}")
     except Exception as e:
         logger.error(f"Error initializing user: {e}")
     finally:
