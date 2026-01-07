@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -7,16 +7,47 @@ from routers import auth, users, chat, upload
 import models
 import crud, schemas
 import os
+import logging
+import sys
+import time
 from sqlalchemy.orm import Session
+
+# Logging Configuration
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, "server.log")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("RealEgo")
 
 # Create DB tables
 # In production, use Alembic. For now, auto-create.
 try:
     Base.metadata.create_all(bind=engine)
+    logger.info("Database tables checked/created.")
 except Exception as e:
-    print(f"Error creating tables: {e}")
+    logger.error(f"Error creating tables: {e}")
 
 app = FastAPI(title="RealEgo Backend")
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"Incoming connection from {client_host} - {request.method} {request.url.path}")
+    
+    response = await call_next(request)
+    
+    process_time = time.time() - start_time
+    logger.info(f"Completed {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.4f}s")
+    return response
 
 # CORS
 app.add_middleware(
@@ -51,18 +82,23 @@ def init_default_user():
     try:
         user = crud.get_user_by_username(db, "tera")
         if not user:
-            print("Creating default user 'tera'")
+            logger.info("Creating default user 'tera'")
             user_in = schemas.UserCreate(username="tera", password="tera")
             crud.create_user(db, user_in)
+        else:
+            logger.info("Default user 'tera' already exists.")
     except Exception as e:
-        print(f"Error initializing user: {e}")
+        logger.error(f"Error initializing user: {e}")
     finally:
         db.close()
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Server is starting up...")
     init_default_user()
+    logger.info("Startup complete.")
 
 if __name__ == "__main__":
     import uvicorn
+    logger.info("Starting Uvicorn server on port 8080...")
     uvicorn.run(app, host="0.0.0.0", port=8080)
