@@ -59,7 +59,7 @@ stop() {
              kill -9 $PID
         fi
     else
-        echo "Process $PID not running."
+        echo "Process $PID not running. Cleaning up stale PID file."
     fi
     
     rm $PID_FILE
