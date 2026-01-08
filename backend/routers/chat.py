@@ -9,10 +9,25 @@ logger = logging.getLogger("RealEgo")
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
+from typing import List
+
+@router.get("/history", response_model=List[schemas.ChatMessage])
+async def get_history(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    profile = crud.get_profile(db, current_user.id)
+    limit = 100
+    if profile and profile.history_limit:
+        limit = profile.history_limit
+    
+    logger.info(f"Fetching chat history for user {current_user.username} with limit {limit}")
+    return crud.get_chat_history(db, current_user.id, limit)
+
 @router.post("/", response_model=schemas.ChatResponse)
 async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     logger.info(f"Received chat request from user {current_user.username}: {request.message}")
     
+    # Save user message
+    crud.create_chat_message(db, current_user.id, "user", request.message)
+
     # 1. Get user profile for context
     profile = crud.get_profile(db, current_user.id)
     profile_dict = {}
@@ -30,6 +45,9 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
     response_text = llm_service.chat(request.message, str(current_user.id), profile_dict)
     logger.info(f"LLM Response: {response_text}")
     
+    # Save assistant message
+    crud.create_chat_message(db, current_user.id, "assistant", response_text)
+
     # 3. Add interaction to memory in BACKGROUND
     logger.info(f"Queueing memory update in background for user {current_user.username}")
     background_tasks.add_task(mem0_service.add_memory, f"User: {request.message}\nAssistant: {response_text}", str(current_user.id))

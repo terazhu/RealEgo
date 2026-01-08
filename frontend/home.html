@@ -36,6 +36,7 @@
         <h3>RealEgo</h3>
         <button onclick="showSection('chat')" id="btn-chat" class="active">Chat</button>
         <button onclick="showSection('profile')" id="btn-profile">Profile & Memory</button>
+        <button onclick="showSection('settings')" id="btn-settings">Settings</button>
         <button onclick="logout()">Logout</button>
     </div>
 
@@ -78,6 +79,15 @@
                 <button onclick="uploadFile()" style="margin-top: 10px; padding: 5px 10px;">Upload</button>
             </div>
         </div>
+        <div id="settings" class="section">
+            <h2>Settings</h2>
+            <div class="form-group">
+                <label>Chat History Limit (Number of messages to store/retrieve)</label>
+                <input type="number" id="history_limit" value="100" min="10" max="1000">
+            </div>
+            <button onclick="saveSettings()" style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Save Settings</button>
+        </div>
+
     </div>
 
     <script>
@@ -121,7 +131,23 @@
                     document.getElementById('birth_date').value = data.birth_date || '';
                     document.getElementById('location').value = data.location || '';
                     document.getElementById('family_info').value = data.family_info || '';
+                    document.getElementById('history_limit').value = data.history_limit || 100;
                 }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function saveSettings() {
+            const limit = document.getElementById('history_limit').value;
+            try {
+                const res = await fetch(`${API_URL}/users/me/profile`, {
+                    method: 'PUT',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history_limit: parseInt(limit) })
+                });
+                if (res.ok) alert('Settings saved!');
+                else alert('Failed to save settings');
             } catch (e) {
                 console.error(e);
             }
@@ -233,6 +259,21 @@
 
         // Init
         loadProfile();
+        loadHistory();
+        
+        async function loadHistory() {
+            try {
+                const res = await fetch(`${API_URL}/chat/history`, { headers });
+                if (res.ok) {
+                    const messages = await res.json();
+                    messages.forEach(msg => {
+                        addMessage(msg.content, msg.role);
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to load history", e);
+            }
+        }
     </script>
 </body>
 </html>

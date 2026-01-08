@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 
 class UserBase(BaseModel):
     username: str
@@ -28,6 +28,7 @@ class ProfileBase(BaseModel):
     family_info: Optional[str] = None
     education_history: Optional[str] = None
     work_history: Optional[str] = None
+    history_limit: Optional[int] = 100
 
 class ProfileUpdate(ProfileBase):
     pass
@@ -43,3 +44,12 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+
+class ChatMessage(BaseModel):
+    id: int
+    role: str
+    content: str
+    timestamp: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True

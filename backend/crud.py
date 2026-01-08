@@ -54,3 +54,28 @@ def update_profile(db: Session, user_id: int, profile: schemas.ProfileUpdate):
     db.commit()
     db.refresh(db_profile)
     return db_profile
+
+def create_chat_message(db: Session, user_id: int, role: str, content: str):
+    try:
+        db_msg = models.ChatMessage(user_id=user_id, role=role, content=content)
+        db.add(db_msg)
+        db.commit()
+        db.refresh(db_msg)
+        return db_msg
+    except Exception as e:
+        logger.error(f"Error creating chat message: {e}")
+        db.rollback()
+        return None
+
+def get_chat_history(db: Session, user_id: int, limit: int = 100):
+    try:
+        # Get last N messages, ordered by timestamp desc, then reversed to show in chronological order
+        messages = db.query(models.ChatMessage)\
+            .filter(models.ChatMessage.user_id == user_id)\
+            .order_by(models.ChatMessage.timestamp.desc())\
+            .limit(limit)\
+            .all()
+        return list(reversed(messages))
+    except Exception as e:
+        logger.error(f"Error fetching chat history: {e}")
+        return []
