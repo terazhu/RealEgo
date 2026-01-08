@@ -165,6 +165,7 @@ sync_files() {
         --include='*.yaml' \
         --include='*.yml' \
         --include='*.txt' \
+        --include='*.pem' \
         --exclude='*' \
         -e "$ssh_cmd" \
         "${LOCAL_DIR}/" \
