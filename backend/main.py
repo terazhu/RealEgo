@@ -108,6 +108,15 @@ def init_default_user():
 @app.on_event("startup")
 async def startup_event():
     logger.info("Server is starting up...")
+    
+    # Run DB init logic manually here to ensure schemas are updated
+    try:
+        from init_db import init_db
+        logger.info("Running DB initialization...")
+        init_db()
+    except Exception as e:
+        logger.error(f"DB initialization failed: {e}")
+
     init_default_user()
     logger.info("Startup complete.")
 
