@@ -5,30 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RealEgo - Home</title>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background-color: #f0f2f5; }
-        .sidebar { width: 250px; background: #fff; padding: 20px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        .sidebar button { padding: 10px; margin-bottom: 10px; background: #eee; border: none; border-radius: 4px; cursor: pointer; text-align: left; }
-        .sidebar button.active { background: #007bff; color: white; }
-        .content { flex: 1; padding: 20px; overflow-y: auto; }
-        .section { display: none; }
-        .section.active { display: block; }
+        :root {
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --bg-color: #f0f2f5;
+            --sidebar-bg: #fff;
+            --text-color: #333;
+            --bubble-user: #007bff;
+            --bubble-assistant: #fff;
+            --border-color: #ddd;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-color); }
         
-        /* Forms */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        textarea { height: 100px; }
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar-bg); padding: 20px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary-color); font-size: 1.5rem; }
+        .sidebar button { padding: 12px 15px; margin-bottom: 8px; background: transparent; border: none; border-radius: 8px; cursor: pointer; text-align: left; font-size: 1rem; color: #555; transition: all 0.2s; }
+        .sidebar button:hover { background: #f8f9fa; color: var(--primary-color); }
+        .sidebar button.active { background: #e7f1ff; color: var(--primary-color); font-weight: 600; }
+        .sidebar .spacer { flex: 1; }
+        .sidebar button.logout { color: #dc3545; margin-top: auto; }
+        .sidebar button.logout:hover { background: #ffebeb; color: #c82333; }
+
+        /* Main Content */
+        .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; }
+        .section { display: none; flex: 1; flex-direction: column; height: 100%; }
+        .section.active { display: flex; }
         
-        /* Chat */
-        .chat-box { height: calc(100vh - 150px); border: 1px solid #ddd; background: white; padding: 20px; overflow-y: scroll; margin-bottom: 20px; border-radius: 8px; }
-        .message { margin-bottom: 15px; }
-        .message.user { text-align: right; }
-        .message.assistant { text-align: left; }
-        .bubble { display: inline-block; padding: 10px 15px; border-radius: 20px; max-width: 70%; }
-        .user .bubble { background: #007bff; color: white; }
-        .assistant .bubble { background: #e9ecef; color: #333; }
-        .input-area { display: flex; gap: 10px; }
-        .input-area input { flex: 1; }
+        /* Chat Layout */
+        #chat { padding: 0; background: var(--bg-color); }
+        .chat-header { padding: 15px 20px; background: white; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 1.1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; }
+        .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        
+        /* Messages */
+        .message { display: flex; flex-direction: column; max-width: 80%; }
+        .message.user { align-self: flex-end; align-items: flex-end; }
+        .message.assistant { align-self: flex-start; align-items: flex-start; }
+        .bubble { padding: 12px 16px; border-radius: 18px; font-size: 1rem; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.1); word-wrap: break-word; }
+        .message.user .bubble { background: var(--bubble-user); color: white; border-bottom-right-radius: 4px; }
+        .message.assistant .bubble { background: var(--bubble-assistant); color: var(--text-color); border-bottom-left-radius: 4px; border: 1px solid #e1e4e8; }
+        .message.assistant .bubble.thinking { color: #888; font-style: italic; background: #f8f9fa; }
+        
+        /* Input Area */
+        .input-area { padding: 20px; background: white; border-top: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+        .input-area input { flex: 1; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 24px; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+        .input-area input:focus { border-color: var(--primary-color); }
+        .input-area button { padding: 10px 24px; background: var(--primary-color); color: white; border: none; border-radius: 24px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .input-area button:hover { background: var(--primary-hover); }
+
+        /* Other Sections (Profile/Settings) */
+        #profile, #settings { padding: 40px; overflow-y: auto; max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        h2 { margin-top: 0; color: #333; margin-bottom: 30px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input[type="text"], input[type="date"], input[type="number"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; transition: border-color 0.2s; }
+        input:focus, textarea:focus { border-color: var(--primary-color); outline: none; }
+        textarea { height: 120px; resize: vertical; }
+        .btn-save { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-save:hover { background: #218838; }
+        hr { border: 0; height: 1px; background: #ddd; margin: 30px 0; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #bbb; }
     </style>
 </head>
 <body>
@@ -37,18 +78,19 @@
         <button onclick="showSection('chat')" id="btn-chat" class="active">Chat</button>
         <button onclick="showSection('profile')" id="btn-profile">Profile & Memory</button>
         <button onclick="showSection('settings')" id="btn-settings">Settings</button>
-        <button onclick="logout()">Logout</button>
+        <div class="spacer"></div>
+        <button onclick="logout()" class="logout">Logout</button>
     </div>
 
     <div class="content">
         <div id="chat" class="section active">
-            <h2>Chat with RealEgo</h2>
+            <div class="chat-header">Chat with RealEgo</div>
             <div class="chat-box" id="chat-box">
                 <!-- Messages -->
             </div>
             <div class="input-area">
-                <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
-                <button onclick="sendMessage()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Send</button>
+                <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" autocomplete="off">
+                <button onclick="sendMessage()">Send</button>
             </div>
         </div>
 
@@ -70,24 +112,24 @@
                 <label>Family Info</label>
                 <textarea id="family_info"></textarea>
             </div>
-            <button onclick="saveProfile()" style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Save Profile</button>
+            <button onclick="saveProfile()" class="btn-save">Save Profile</button>
             
             <hr>
             <h3>Upload Documents (TOS)</h3>
             <div class="form-group">
-                <input type="file" id="file-upload">
-                <button onclick="uploadFile()" style="margin-top: 10px; padding: 5px 10px;">Upload</button>
+                <input type="file" id="file-upload" style="border: none; padding-left: 0;">
+                <button onclick="uploadFile()" style="margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Upload</button>
             </div>
         </div>
+
         <div id="settings" class="section">
             <h2>Settings</h2>
             <div class="form-group">
                 <label>Chat History Limit (Number of messages to store/retrieve)</label>
                 <input type="number" id="history_limit" value="100" min="10" max="1000">
             </div>
-            <button onclick="saveSettings()" style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Save Settings</button>
+            <button onclick="saveSettings()" class="btn-save">Save Settings</button>
         </div>
-
     </div>
 
     <script>
@@ -213,7 +255,7 @@
             const id = 'loading-' + Date.now();
             div.id = id;
             div.className = `message assistant`;
-            div.innerHTML = `<span class="bubble" style="font-style: italic; color: #666;">Thinking...</span>`;
+            div.innerHTML = `<span class="bubble thinking">Thinking...</span>`;
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
             return id;

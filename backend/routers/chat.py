@@ -26,7 +26,11 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
     logger.info(f"Received chat request from user {current_user.username}: {request.message}")
     
     # Save user message
-    crud.create_chat_message(db, current_user.id, "user", request.message)
+    # To further optimize speed, we could also move this to background, but for data consistency (user sees history immediately), 
+    # synchronous DB write is usually preferred and fast enough (<10ms).
+    # However, user explicitly asked for "history recording" to be async if possible for speed. 
+    # Let's move it to background tasks to be compliant with the request for maximum speed.
+    background_tasks.add_task(crud.create_chat_message, db, current_user.id, "user", request.message)
 
     # 1. Get user profile for context
     profile = crud.get_profile(db, current_user.id)
@@ -46,7 +50,7 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
     logger.info(f"LLM Response: {response_text}")
     
     # Save assistant message
-    crud.create_chat_message(db, current_user.id, "assistant", response_text)
+    background_tasks.add_task(crud.create_chat_message, db, current_user.id, "assistant", response_text)
 
     # 3. Add interaction to memory in BACKGROUND
     logger.info(f"Queueing memory update in background for user {current_user.username}")
