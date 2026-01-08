@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 import schemas, auth, models, database, crud
 from services.llm import llm_service
@@ -10,7 +10,7 @@ logger = logging.getLogger("RealEgo")
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("/", response_model=schemas.ChatResponse)
-async def chat(request: schemas.ChatRequest, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     logger.info(f"Received chat request from user {current_user.username}: {request.message}")
     
     # 1. Get user profile for context
@@ -30,8 +30,8 @@ async def chat(request: schemas.ChatRequest, current_user: models.User = Depends
     response_text = llm_service.chat(request.message, str(current_user.id), profile_dict)
     logger.info(f"LLM Response: {response_text}")
     
-    # 3. Add interaction to memory
-    logger.info(f"Adding interaction to memory for user {current_user.username}")
-    mem0_service.add_memory(f"User: {request.message}\nAssistant: {response_text}", str(current_user.id))
+    # 3. Add interaction to memory in BACKGROUND
+    logger.info(f"Queueing memory update in background for user {current_user.username}")
+    background_tasks.add_task(mem0_service.add_memory, f"User: {request.message}\nAssistant: {response_text}", str(current_user.id))
     
     return {"response": response_text}

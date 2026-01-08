@@ -155,12 +155,19 @@
             addMessage(message, 'user');
             input.value = '';
 
+            // Show loading indicator
+            const loadingId = addLoadingMessage();
+
             try {
                 const res = await fetch(`${API_URL}/chat/`, {
                     method: 'POST',
                     headers: { ...headers, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message })
                 });
+                
+                // Remove loading indicator
+                removeMessage(loadingId);
+
                 if (res.status === 401) {
                     alert("Session expired. Please login again.");
                     logout();
@@ -169,8 +176,26 @@
                 const data = await res.json();
                 addMessage(data.response, 'assistant');
             } catch (e) {
+                removeMessage(loadingId);
                 addMessage('Error communicating with server.', 'assistant');
             }
+        }
+
+        function addLoadingMessage() {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            const id = 'loading-' + Date.now();
+            div.id = id;
+            div.className = `message assistant`;
+            div.innerHTML = `<span class="bubble" style="font-style: italic; color: #666;">Thinking...</span>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return id;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
         }
 
         function addMessage(text, role) {
