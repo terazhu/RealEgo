@@ -23,10 +23,10 @@ class Mem0Service:
             "user_id": str(user_id)
         }
         try:
-            logger.debug(f"Adding memory to Mem0: {url}, data: {data}")
-            response = requests.post(url, json=data, headers=self.headers)
+            logger.info(f"Adding memory to Mem0: {url}, data: {data}")
+            response = requests.post(url, json=data, headers=self.headers, timeout=5)
             response.raise_for_status()
-            logger.debug(f"Memory added successfully: {response.json()}")
+            logger.info(f"Memory added successfully: {response.json()}")
             return response.json()
         except Exception as e:
             logger.error(f"Error adding memory: {e}")
@@ -40,11 +40,11 @@ class Mem0Service:
             "user_id": str(user_id)
         }
         try:
-            logger.debug(f"Searching memory in Mem0: {url}, data: {data}")
-            response = requests.post(url, json=data, headers=self.headers)
+            logger.info(f"Searching memory in Mem0: {url}, data: {data}")
+            response = requests.post(url, json=data, headers=self.headers, timeout=5)
             response.raise_for_status()
             result = response.json()
-            logger.debug(f"Memory search result: {result}")
+            logger.info(f"Memory search result: {result}")
             return result
         except Exception as e:
             logger.error(f"Error searching memory: {e}")

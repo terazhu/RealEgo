@@ -11,7 +11,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("/", response_model=schemas.ChatResponse)
 async def chat(request: schemas.ChatRequest, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    logger.debug(f"Received chat request from user {current_user.username}: {request.message}")
+    logger.info(f"Received chat request from user {current_user.username}: {request.message}")
     
     # 1. Get user profile for context
     profile = crud.get_profile(db, current_user.id)
@@ -24,14 +24,14 @@ async def chat(request: schemas.ChatRequest, current_user: models.User = Depends
             "location": profile.location,
             "family_info": profile.family_info
         }
-    logger.debug(f"Loaded profile for user {current_user.username}: {profile_dict}")
+    logger.info(f"Loaded profile for user {current_user.username}: {profile_dict}")
     
     # 2. Get response from LLM
     response_text = llm_service.chat(request.message, str(current_user.id), profile_dict)
-    logger.debug(f"LLM Response: {response_text}")
+    logger.info(f"LLM Response: {response_text}")
     
     # 3. Add interaction to memory
-    logger.debug(f"Adding interaction to memory for user {current_user.username}")
+    logger.info(f"Adding interaction to memory for user {current_user.username}")
     mem0_service.add_memory(f"User: {request.message}\nAssistant: {response_text}", str(current_user.id))
     
     return {"response": response_text}
