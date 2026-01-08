@@ -51,6 +51,12 @@ class LLMService:
         
         # 3. Call LLM
         try:
+            logger.info(f"--- LLM REQUEST START ---")
+            logger.info(f"Model: {self.model}")
+            logger.info(f"System Prompt: {system_prompt}")
+            logger.info(f"User Message: {message}")
+            logger.info(f"--- LLM REQUEST END ---")
+
             completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -60,14 +66,16 @@ class LLMService:
             )
             response = completion.choices[0].message.content
             
-            logger.debug(f"LLM Raw Response: {response}")
+            logger.info(f"--- LLM RESPONSE START ---")
+            logger.info(f"Response Content: {response}")
+            logger.info(f"--- LLM RESPONSE END ---")
             
             # 4. Save interaction to memory (optional, but good for context)
             # mem0_service.add_memory(f"User asked: {message}\nAssistant answered: {response}", user_id)
             
             return response
         except Exception as e:
-            logger.error(f"LLM Error: {e}")
+            logger.error(f"LLM Error: {e}", exc_info=True)
             return "Sorry, I encountered an error processing your request."
 
 llm_service = LLMService()
