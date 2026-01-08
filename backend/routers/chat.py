@@ -65,30 +65,29 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
             # 3. Call LLM
             yield json.dumps({"type": "log", "content": "Constructing prompt and waiting for LLM..."}) + "\n"
             
-            # Note: We are re-implementing part of llm_service.chat here to inject logs or just calling it.
-            # If we call llm_service.chat, it does memory search AGAIN. That's wasteful.
-            # Let's use a modified version or just accept the double search for now (mem0 is fast/cached usually).
-            # ACTUALLY, let's just use llm_service.chat and assume the logs above are "pre-flight checks".
+            # Use streaming chat
+            completion = llm_service.chat(request.message, str(current_user.id), profile_dict, stream=True)
             
-            response_text = llm_service.chat(request.message, str(current_user.id), profile_dict)
+            yield json.dumps({"type": "log", "content": "LLM response stream started."}) + "\n"
             
-            yield json.dumps({"type": "log", "content": "LLM response received."}) + "\n"
-            yield json.dumps({"type": "response", "content": response_text}) + "\n"
+            full_response = ""
+            for chunk in completion:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    # Send partial chunk
+                    yield json.dumps({"type": "response_chunk", "content": content}) + "\n"
+            
+            yield json.dumps({"type": "log", "content": "LLM response complete."}) + "\n"
             
             # 4. Background Tasks (Log them as queued)
             yield json.dumps({"type": "log", "content": "Queueing background memory storage..."}) + "\n"
             
-            # We need to trigger these after the response. 
-            # In StreamingResponse, background tasks are passed to the response object.
-            # We already added them to `background_tasks` object passed in.
-            # However, we need to ensure they run. 
-            # We can add them to the background_tasks dependency and FastAPI handles it after the stream closes.
-            
             # Save assistant message
-            background_tasks.add_task(crud.create_chat_message, db, current_user.id, "assistant", response_text)
+            background_tasks.add_task(crud.create_chat_message, db, current_user.id, "assistant", full_response)
             
             # Add to memory
-            background_tasks.add_task(mem0_service.add_memory, f"User: {request.message}\nAssistant: {response_text}", str(current_user.id))
+            background_tasks.add_task(mem0_service.add_memory, f"User: {request.message}\nAssistant: {full_response}", str(current_user.id))
             
             yield json.dumps({"type": "log", "content": "All tasks queued. Done."}) + "\n"
 

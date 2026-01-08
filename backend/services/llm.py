@@ -17,7 +17,7 @@ class LLMService:
             self.client = None
         self.model = settings.ARK_MODEL
 
-    def chat(self, message: str, user_id: str, user_profile: dict):
+    def chat(self, message: str, user_id: str, user_profile: dict, stream: bool = False):
         if not self.client:
             logger.error("LLM Service not available (Configuration missing).")
             return "LLM Service not available (Configuration missing)."
@@ -57,23 +57,31 @@ class LLMService:
             logger.info(f"User Message: {message}")
             logger.info(f"--- LLM REQUEST END ---")
 
-            completion = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": message}
-                ]
-            )
-            response = completion.choices[0].message.content
-            
-            logger.info(f"--- LLM RESPONSE START ---")
-            logger.info(f"Response Content: {response}")
-            logger.info(f"--- LLM RESPONSE END ---")
-            
-            # 4. Save interaction to memory (optional, but good for context)
-            # mem0_service.add_memory(f"User asked: {message}\nAssistant answered: {response}", user_id)
-            
-            return response
+            if stream:
+                completion = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": message}
+                    ],
+                    stream=True
+                )
+                return completion
+            else:
+                completion = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": message}
+                    ]
+                )
+                response = completion.choices[0].message.content
+                
+                logger.info(f"--- LLM RESPONSE START ---")
+                logger.info(f"Response Content: {response}")
+                logger.info(f"--- LLM RESPONSE END ---")
+                
+                return response
         except Exception as e:
             logger.error(f"LLM Error: {e}", exc_info=True)
             return "Sorry, I encountered an error processing your request."

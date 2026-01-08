@@ -343,6 +343,7 @@
                 // Let's remove it when we get the first "response" type chunk or at end.
                 // For simplicity, let's remove it when stream ends or we process a response chunk.
                 let loadingRemoved = false;
+                let currentStreamMsgId = null;
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -374,12 +375,26 @@
                                 if (logText === 'All tasks queued. Done.') logText = t('log_tasks_queued');
                                 
                                 addStatusLog(logText, 'log');
-                            } else if (data.type === 'response') {
+                            } else if (data.type === 'response_chunk') {
                                 if (!loadingRemoved) {
                                     removeMessage(loadingId);
                                     loadingRemoved = true;
+                                    // Create a new message bubble for streaming content
+                                    currentStreamMsgId = 'msg-' + Date.now();
+                                    addMessage("", 'assistant', currentStreamMsgId);
                                 }
-                                addMessage(data.content, 'assistant');
+                                appendToMessage(currentStreamMsgId, data.content);
+                            } else if (data.type === 'response') {
+                                // Backward compatibility or final full response if needed (but we stream chunks now)
+                                // If we rely on chunks, we might ignore this or just ensure it matches.
+                                // Current backend implementation sends chunks then full text in DB, but doesn't send "response" type anymore in stream loop.
+                                // Wait, the backend logic I wrote sends chunks loop, then "LLM response complete" log. 
+                                // It does NOT send "response" type with full content anymore in the loop I modified.
+                                if (!loadingRemoved) {
+                                    removeMessage(loadingId);
+                                    loadingRemoved = true;
+                                    addMessage(data.content, 'assistant');
+                                }
                             } else if (data.type === 'error') {
                                 addStatusLog(data.content, 'error');
                             }
@@ -415,13 +430,27 @@
             if (el) el.remove();
         }
 
-        function addMessage(text, role) {
+        function addMessage(text, role, specificId = null) {
             const box = document.getElementById('chat-box');
             const div = document.createElement('div');
+            if (specificId) div.id = specificId;
             div.className = `message ${role}`;
             div.innerHTML = `<span class="bubble">${text}</span>`;
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
+        }
+
+        function appendToMessage(id, text) {
+            const msgDiv = document.getElementById(id);
+            if (msgDiv) {
+                const bubble = msgDiv.querySelector('.bubble');
+                if (bubble) {
+                    bubble.innerText += text;
+                    // Auto scroll
+                    const box = document.getElementById('chat-box');
+                    box.scrollTop = box.scrollHeight;
+                }
+            }
         }
 
         async function uploadFile() {
