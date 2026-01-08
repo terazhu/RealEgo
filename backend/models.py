@@ -21,6 +21,7 @@ class Profile(Base):
     family_info = Column(Text) # JSON or text description
     education_history = Column(Text)
     work_history = Column(Text)
+    timeline_data = Column(Text) # JSON string storing the 9 categories
     history_limit = Column(Integer, default=100)
 
 class ChatMessage(Base):

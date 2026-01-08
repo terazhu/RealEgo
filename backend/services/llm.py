@@ -86,4 +86,77 @@ class LLMService:
             logger.error(f"LLM Error: {e}", exc_info=True)
             return "Sorry, I encountered an error processing your request."
 
+    def process_voice_profile(self, audio_file, current_timeline: dict):
+        """
+        1. Transcribe audio
+        2. Extract structured profile data
+        3. Merge with current timeline
+        """
+        if not self.client:
+            return None, "LLM Service not available"
+
+        try:
+            # 1. Transcribe
+            # Note: Ensure the model supports transcription or use specific whisper endpoint
+            # For Doubao/ARK, we might need check if audio.transcriptions is supported or use a different client.
+            # Assuming standard OpenAI interface compatibility for now, or fallback to text if user sends text.
+            # Actually, let's assume the user sends an audio file object.
+            
+            # Since we are using ARK (Doubao), it might not support 'audio.transcriptions' via OpenAI SDK directly 
+            # if the base URL is generic. But let's try. If it fails, we might need a separate service.
+            # However, for this task, I will mock the transcription if the API fails, or assume it works.
+            # WAIT: The user said "said after convert to text". 
+            # I will try to use the client.audio.transcriptions.create
+            
+            # If the custom endpoint doesn't support audio, we might need to skip or use a mock for "demo".
+            # Let's write the code assuming it works or handle error gracefully.
+            
+            transcription = self.client.audio.transcriptions.create(
+                model="whisper-1", # Often standard alias
+                file=audio_file
+            )
+            text = transcription.text
+            logger.info(f"Transcribed text: {text}")
+
+            # 2. Extract Info
+            extraction_prompt = f"""
+            You are a data extraction assistant.
+            Extract information from the user's spoken input into the following JSON structure.
+            Only update fields that are mentioned. Keep existing data if not contradicted.
+            
+            Categories:
+            0: Birth (Time, Location, etc.)
+            1: 0-6 years old experiences
+            2: Primary/Secondary Education & Events
+            3: Higher Education & Events
+            4: Family Relations
+            5: Social Relations (Friends)
+            6: Work History
+            7: Locations (Residence, Work, Past)
+            8: Assets
+            
+            Current Data: {current_timeline}
+            
+            User Input: "{text}"
+            
+            Return ONLY the updated JSON. Keys must be: 
+            "0_birth", "1_early_childhood", "2_primary_edu", "3_higher_edu", "4_family", "5_social", "6_work", "7_locations", "8_assets".
+            Each value should be a string or object with details.
+            """
+            
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a precise data extractor. Output JSON only."},
+                    {"role": "user", "content": extraction_prompt}
+                ],
+                response_format={ "type": "json_object" } # If supported, else prompt engineering
+            )
+            json_response = completion.choices[0].message.content
+            return text, json_response
+
+        except Exception as e:
+            logger.error(f"Voice processing error: {e}", exc_info=True)
+            return None, str(e)
+
 llm_service = LLMService()

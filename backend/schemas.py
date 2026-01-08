@@ -28,6 +28,7 @@ class ProfileBase(BaseModel):
     family_info: Optional[str] = None
     education_history: Optional[str] = None
     work_history: Optional[str] = None
+    timeline_data: Optional[str] = None # JSON string
     history_limit: Optional[int] = 100
 
 class ProfileUpdate(ProfileBase):

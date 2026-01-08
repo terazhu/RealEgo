@@ -107,6 +107,23 @@
         .btn-save:hover { background: #218838; }
         hr { border: 0; height: 1px; background: #ddd; margin: 30px 0; }
         
+        /* Timeline */
+        .timeline-controls { padding: 20px 0; display: flex; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 20px; }
+        .btn-record { padding: 12px 24px; background: #dc3545; color: white; border: none; border-radius: 24px; font-size: 1rem; cursor: pointer; transition: transform 0.1s; display: flex; align-items: center; gap: 8px; }
+        .btn-record:active { transform: scale(0.95); background: #c82333; }
+        .btn-record.recording { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+        
+        .timeline-container { position: relative; padding-left: 30px; }
+        .timeline-container::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e9ecef; }
+        .timeline-node { position: relative; margin-bottom: 30px; }
+        .timeline-node::before { content: ''; position: absolute; left: -24px; top: 0; width: 10px; height: 10px; background: var(--primary-color); border-radius: 50%; border: 4px solid white; box-shadow: 0 0 0 2px var(--primary-color); }
+        .timeline-title { font-weight: 600; font-size: 1.1rem; color: #333; margin-bottom: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .timeline-title:hover { color: var(--primary-color); }
+        .timeline-content { color: #666; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; display: none; margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .timeline-content.active { display: block; }
+        .timeline-content.empty { color: #aaa; font-style: italic; }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -125,14 +142,17 @@
     <div class="sidebar">
         <h3 data-i18n="title"><i class="fas fa-brain"></i> RealEgo</h3>
         <button onclick="showSection('chat')" id="btn-chat" class="active" data-i18n="nav_chat"><i class="fas fa-comments"></i> Chat</button>
-        <button onclick="showSection('profile')" id="btn-profile" data-i18n="nav_profile"><i class="fas fa-user-circle"></i> Profile & Memory</button>
+        <button onclick="showSection('profile')" id="btn-profile" data-i18n="nav_profile"><i class="fas fa-user-clock"></i> Profile (Timeline)</button>
+        <button onclick="showSection('memory')" id="btn-memory" data-i18n="nav_memory"><i class="fas fa-database"></i> Memory</button>
         <button onclick="showSection('settings')" id="btn-settings" data-i18n="nav_settings"><i class="fas fa-cog"></i> Settings</button>
         <div class="spacer"></div>
         <button onclick="logout()" class="logout" data-i18n="nav_logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
 
     <div class="content">
+        <!-- Chat Section -->
         <div id="chat" class="section active">
+            <!-- ... existing chat ... -->
             <div class="chat-header">
                 <span data-i18n="chat_header">Chat with RealEgo</span>
             </div>
@@ -154,34 +174,40 @@
             </div>
         </div>
 
+        <!-- Profile (Timeline) Section -->
         <div id="profile" class="section">
-            <h2 data-i18n="profile_header">Profile Settings</h2>
-            <div class="form-group">
-                <label data-i18n="label_fullname">Full Name</label>
-                <input type="text" id="full_name">
-            </div>
-            <div class="form-group">
-                <label data-i18n="label_birthdate">Birth Date</label>
-                <input type="date" id="birth_date">
-            </div>
-            <div class="form-group">
-                <label data-i18n="label_location">Location</label>
-                <input type="text" id="location">
-            </div>
-            <div class="form-group">
-                <label data-i18n="label_family">Family Info</label>
-                <textarea id="family_info"></textarea>
-            </div>
-            <button onclick="saveProfile()" class="btn-save" data-i18n="btn_save_profile">Save Profile</button>
+            <h2 data-i18n="profile_header">Personal Timeline</h2>
             
-            <hr>
-            <h3 data-i18n="upload_header">Upload Documents (TOS)</h3>
-            <div class="form-group">
-                <input type="file" id="file-upload" style="border: none; padding-left: 0;">
-                <button onclick="uploadFile()" style="margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" data-i18n="btn_upload">Upload</button>
+            <div class="timeline-controls">
+                <button id="btn-record" class="btn-record" onmousedown="startRecording()" onmouseup="stopRecording()" onmouseleave="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()">
+                    <i class="fas fa-microphone"></i> <span id="record-text">Hold to Speak</span>
+                </button>
+                <div id="record-status" style="margin-left: 10px; color: #666; font-size: 0.9rem;"></div>
+            </div>
+
+            <div class="timeline-container" id="timeline-container">
+                <!-- Timeline items will be injected here -->
             </div>
         </div>
 
+        <!-- Memory Section (Old Profile Uploads + Search maybe later) -->
+        <div id="memory" class="section">
+             <h2 data-i18n="memory_header">Memory & Documents</h2>
+             <div class="form-group">
+                <label>Manual Memory Entry (Legacy)</label>
+                <textarea id="family_info" placeholder="Any specific memory to add manually..."></textarea>
+                <button onclick="saveProfile()" class="btn-save" style="margin-top:10px;">Save Text Memory</button>
+             </div>
+             
+             <hr>
+             <h3 data-i18n="upload_header">Upload Documents (TOS)</h3>
+             <div class="form-group">
+                <input type="file" id="file-upload" style="border: none; padding-left: 0;">
+                <button onclick="uploadFile()" style="margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" data-i18n="btn_upload">Upload</button>
+             </div>
+        </div>
+
+        <!-- Settings Section -->
         <div id="settings" class="section">
             <h2 data-i18n="settings_header">Settings</h2>
             <div class="form-group">
@@ -234,6 +260,13 @@
                     document.getElementById('location').value = data.location || '';
                     document.getElementById('family_info').value = data.family_info || '';
                     document.getElementById('history_limit').value = data.history_limit || 100;
+                    
+                    if (data.timeline_data) {
+                        try {
+                            timelineData = JSON.parse(data.timeline_data);
+                        } catch(e) { console.error("Bad timeline JSON", e); }
+                    }
+                    renderTimeline();
                 }
             } catch (e) {
                 console.error(e);
@@ -477,6 +510,136 @@
             }
         }
 
+        // Timeline Categories Definition
+        const TIMELINE_CATEGORIES = [
+            { id: "0_birth", title_en: "0. Birth", title_zh: "0. 出生" },
+            { id: "1_early_childhood", title_en: "1. Early Childhood (0-6)", title_zh: "1. 0~6岁经历" },
+            { id: "2_primary_edu", title_en: "2. Primary/Secondary Edu", title_zh: "2. 中小学教育经历" },
+            { id: "3_higher_edu", title_en: "3. Higher Education", title_zh: "3. 大学以后教育经历" },
+            { id: "4_family", title_en: "4. Family Relations", title_zh: "4. 家庭关系" },
+            { id: "5_social", title_en: "5. Social Relations", title_zh: "5. 社会关系" },
+            { id: "6_work", title_en: "6. Work History", title_zh: "6. 工作情况" },
+            { id: "7_locations", title_en: "7. Locations", title_zh: "7. 居住地/工作地/曾经生活地" },
+            { id: "8_assets", title_en: "8. Assets", title_zh: "8. 财产情况" }
+        ];
+        
+        let timelineData = {};
+
+        // Recording Logic
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function startRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Audio recording not supported or permission denied.");
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = sendAudio;
+                mediaRecorder.start();
+                
+                document.getElementById('btn-record').classList.add('recording');
+                document.getElementById('record-text').innerText = "Recording...";
+            } catch (e) {
+                console.error(e);
+                alert("Microphone access denied.");
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                document.getElementById('btn-record').classList.remove('recording');
+                document.getElementById('record-text').innerText = "Processing...";
+            }
+        }
+
+        async function sendAudio() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Chrome/Firefox usually webm
+            // Or 'audio/mp4' for Safari if needed, but Whisper handles webm fine.
+            
+            // Note: We need to ensure the backend receives a valid file format.
+            // Let's wrap it in a File object.
+            const file = new File([audioBlob], "voice_profile.webm", { type: 'audio/webm' });
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            document.getElementById('record-status').innerText = "Uploading & Analyzing...";
+            
+            try {
+                const res = await fetch(`${API_URL}/users/me/profile/voice`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                
+                if (res.ok) {
+                    const profile = await res.json();
+                    document.getElementById('record-status').innerText = "Done!";
+                    setTimeout(() => document.getElementById('record-status').innerText = "", 3000);
+                    
+                    // Reload timeline
+                    if (profile.timeline_data) {
+                        try {
+                            timelineData = JSON.parse(profile.timeline_data);
+                        } catch(e) { timelineData = {}; }
+                        renderTimeline();
+                    }
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + err.detail);
+                    document.getElementById('record-status').innerText = "Error.";
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('record-status').innerText = "Network Error.";
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '';
+            
+            TIMELINE_CATEGORIES.forEach(cat => {
+                const title = currentLang === 'zh' ? cat.title_zh : cat.title_en;
+                let content = timelineData[cat.id] || "";
+                if (typeof content === 'object') content = JSON.stringify(content, null, 2);
+                
+                const isEmpty = !content || content.trim() === "";
+                
+                const node = document.createElement('div');
+                node.className = 'timeline-node';
+                node.innerHTML = `
+                    <div class="timeline-title" onclick="toggleTimelineItem(this)">
+                        ${title}
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #999;"></i>
+                    </div>
+                    <div class="timeline-content ${isEmpty ? 'empty' : ''}">
+                        ${isEmpty ? (currentLang === 'zh' ? '暂无数据' : 'No data yet') : content}
+                    </div>
+                `;
+                container.appendChild(node);
+            });
+        }
+        
+        function toggleTimelineItem(el) {
+            const content = el.nextElementSibling;
+            content.classList.toggle('active');
+            const icon = el.querySelector('i');
+            if (content.classList.contains('active')) {
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                icon.className = 'fas fa-chevron-down';
+            }
+        }
+
         // Init
         applyTranslations();
         updateLangSelect();
@@ -485,7 +648,7 @@
         
         function switchLang(lang) {
             setLanguage(lang);
-            // updateLangSelect(); // Not needed as select updates itself on change
+            renderTimeline(); // Re-render timeline titles
         }
 
         function updateLangSelect() {
