@@ -42,9 +42,22 @@
         .section.active { display: flex; }
         
         /* Status Panel */
+        .status-container {
+            border-bottom: 1px solid var(--border-color);
+            background: #f8f9fa;
+        }
+        .status-toggle-bar {
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        .status-toggle-bar:hover {
+            background: #e9ecef;
+        }
         .status-panel { 
-            background: #f8f9fa; 
-            border-bottom: 1px solid var(--border-color); 
             padding: 10px 20px; 
             font-size: 0.85rem; 
             color: #666; 
@@ -52,6 +65,7 @@
             overflow-y: auto; 
             font-family: monospace; 
             display: none;
+            border-top: 1px solid #eee;
         }
         .status-panel.active { display: block; }
         .status-item { margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
@@ -62,7 +76,7 @@
         /* Chat Layout */
         #chat { padding: 0; background: var(--bg-color); }
         .chat-header { padding: 15px 20px; background: white; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 1.1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; display: flex; justify-content: space-between; align-items: center; }
-        .toggle-status { font-size: 0.9rem; color: var(--primary-color); cursor: pointer; border: none; background: none; }
+        .toggle-status { display: none; } /* Hide old button */
         .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
         
         /* Messages */
@@ -121,11 +135,15 @@
         <div id="chat" class="section active">
             <div class="chat-header">
                 <span data-i18n="chat_header">Chat with RealEgo</span>
-                <button class="toggle-status" onclick="toggleStatusPanel()" data-i18n="toggle_log"><i class="fas fa-terminal"></i> Toggle Status Log</button>
             </div>
-            <div class="status-panel active" id="status-panel">
-                <!-- Status logs go here -->
-                <div class="status-item"><i class="fas fa-info-circle"></i> <span data-i18n="status_ready">Ready.</span></div>
+            <div class="status-container">
+                <div class="status-panel active" id="status-panel">
+                    <!-- Status logs go here -->
+                    <div class="status-item"><i class="fas fa-info-circle"></i> <span data-i18n="status_ready">Ready.</span></div>
+                </div>
+                <div class="status-toggle-bar" onclick="toggleStatusPanel()">
+                    <i id="status-toggle-icon" class="fas fa-chevron-up"></i>
+                </div>
             </div>
             <div class="chat-box" id="chat-box">
                 <!-- Messages -->
@@ -259,7 +277,13 @@
 
         function toggleStatusPanel() {
             const panel = document.getElementById('status-panel');
+            const icon = document.getElementById('status-toggle-icon');
             panel.classList.toggle('active');
+            if (panel.classList.contains('active')) {
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                icon.className = 'fas fa-chevron-down';
+            }
         }
 
         function addStatusLog(text, type = 'log') {
