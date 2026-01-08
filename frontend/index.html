@@ -24,8 +24,11 @@
     </div>
 
     <script>
-        const API_URL = ""; // Relative path since served by backend
-
+        // Dynamically determine API URL based on current page protocol and host
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+        const API_URL = `${protocol}//${host}`; 
+        
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
