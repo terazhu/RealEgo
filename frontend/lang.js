@@ -124,17 +124,16 @@ function applyTranslations() {
                 if (textNode) {
                     textNode.nodeValue = ' ' + t(key);
                 } else {
-                     // If strictly just icon, maybe append text? Or maybe it's complex.
-                     // For our specific layout:
-                     // <button ...><i ...></i> Chat</button>
-                     // Just appending text works if we clear old text first, but that's hard.
-                     // Easier way: Rebuild innerHTML with icon + text? No, unsafe.
+                     // Fallback: if no text node found, maybe it is empty or icon only.
+                     // But we have data-i18n, so we expect text.
+                     // Let's just append text if no text node?
+                     // Or replace last child if it is text?
+                     // If structure is <span data-i18n>Text</span> inside, we should have targeted the span.
+                     // But we targeted the button.
                      
-                     // Let's try to set innerText but keeping the icon class? No.
-                     
-                     // Best approach for this simple app:
-                     // Assume structure <i class="..."></i> <span>Text</span>
-                     // Modify HTML to support this.
+                     // For elements like <div class="status-item"><i...></i> <span data-i18n>...</span></div>
+                     // the data-i18n is on the span, so el.children.length might be 0 if span has no children.
+                     // So this branch is for <button data-i18n><i...></i> Text</button>
                 }
             } else {
                 el.innerText = t(key);
@@ -142,11 +141,7 @@ function applyTranslations() {
         }
     });
 
-    // Special handling for elements that might need specific updates
-    // e.g. status panel "Ready" text if it's there
-    const readyStatus = document.querySelector('.status-item i.fa-info-circle')?.parentElement;
-    if (readyStatus && readyStatus.innerText.includes('Ready')) {
-         // This is tricky for dynamic content. We generally rely on data-i18n.
-         // For dynamic logs, we can't easily translate past logs, but new ones will be translated.
-    }
+    // Also update the select dropdown if it exists
+    const select = document.getElementById('lang-select');
+    if (select) select.value = currentLang;
 }

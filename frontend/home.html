@@ -32,9 +32,9 @@
         .sidebar button.logout:hover { background: #ffebeb; color: #c82333; }
 
         /* Language Switcher */
-        .lang-switch { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
-        .lang-switch button { padding: 5px 10px; background: white; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.8rem; color: #666; }
-        .lang-switch button.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .lang-switch { position: absolute; top: 20px; right: 20px; z-index: 100; }
+        .lang-switch select { padding: 5px 10px; background: white; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.8rem; color: #666; outline: none; }
+        .lang-switch select:focus { border-color: var(--primary-color); }
 
         /* Main Content */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; }
@@ -102,8 +102,10 @@
 </head>
 <body>
     <div class="lang-switch">
-        <button onclick="switchLang('en')" id="lang-en" class="active">EN</button>
-        <button onclick="switchLang('zh')" id="lang-zh">中文</button>
+        <select id="lang-select" onchange="switchLang(this.value)">
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+        </select>
     </div>
 
     <div class="sidebar">
@@ -424,18 +426,18 @@
 
         // Init
         applyTranslations();
-        updateLangButtons();
+        updateLangSelect();
         loadProfile();
         loadHistory();
         
         function switchLang(lang) {
             setLanguage(lang);
-            updateLangButtons();
+            // updateLangSelect(); // Not needed as select updates itself on change
         }
 
-        function updateLangButtons() {
-            document.querySelectorAll('.lang-switch button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`lang-${currentLang}`).classList.add('active');
+        function updateLangSelect() {
+            const select = document.getElementById('lang-select');
+            if (select) select.value = currentLang;
         }
 
         async function loadHistory() {
