@@ -124,16 +124,13 @@ function applyTranslations() {
                 if (textNode) {
                     textNode.nodeValue = ' ' + t(key);
                 } else {
-                     // Fallback: if no text node found, maybe it is empty or icon only.
-                     // But we have data-i18n, so we expect text.
-                     // Let's just append text if no text node?
-                     // Or replace last child if it is text?
-                     // If structure is <span data-i18n>Text</span> inside, we should have targeted the span.
-                     // But we targeted the button.
-                     
-                     // For elements like <div class="status-item"><i...></i> <span data-i18n>...</span></div>
-                     // the data-i18n is on the span, so el.children.length might be 0 if span has no children.
-                     // So this branch is for <button data-i18n><i...></i> Text</button>
+                     // Fallback for button with icon but no text node (or empty text node)
+                     // e.g. <button><i class="..."></i></button> where text was removed or never there?
+                     // But our HTML is <button><i...></i> Text</button>
+                     // If text node is empty string (whitespace), it might be skipped by loop above if trim() check fails.
+                     // Let's try to append a text node if none exists.
+                     const newText = ' ' + t(key);
+                     el.appendChild(document.createTextNode(newText));
                 }
             } else {
                 el.innerText = t(key);
