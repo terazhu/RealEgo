@@ -233,6 +233,21 @@
             'Authorization': `Bearer ${token}`
         };
 
+        // Timeline Categories Definition - MOVED UP
+        const TIMELINE_CATEGORIES = [
+            { id: "0_birth", title_en: "0. Birth", title_zh: "0. 出生" },
+            { id: "1_early_childhood", title_en: "1. Early Childhood (0-6)", title_zh: "1. 0~6岁经历" },
+            { id: "2_primary_edu", title_en: "2. Primary/Secondary Edu", title_zh: "2. 中小学教育经历" },
+            { id: "3_higher_edu", title_en: "3. Higher Education", title_zh: "3. 大学以后教育经历" },
+            { id: "4_family", title_en: "4. Family Relations", title_zh: "4. 家庭关系" },
+            { id: "5_social", title_en: "5. Social Relations", title_zh: "5. 社会关系" },
+            { id: "6_work", title_en: "6. Work History", title_zh: "6. 工作情况" },
+            { id: "7_locations", title_en: "7. Locations", title_zh: "7. 居住地/工作地/曾经生活地" },
+            { id: "8_assets", title_en: "8. Assets", title_zh: "8. 财产情况" }
+        ];
+        
+        let timelineData = {};
+
         function showSection(id) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.sidebar button').forEach(el => el.classList.remove('active'));
@@ -486,7 +501,7 @@
             }
         }
 
-        async function uploadFile() {
+        function uploadFile() {
             const fileInput = document.getElementById('file-upload');
             if (fileInput.files.length === 0) return;
             
@@ -494,36 +509,25 @@
             formData.append('file', fileInput.files[0]);
 
             try {
-                const res = await fetch(`${API_URL}/upload/`, {
+                fetch(`${API_URL}/upload/`, {
                     method: 'POST',
                     headers: headers, // Do NOT set Content-Type, browser sets it for FormData
                     body: formData
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    alert(t('alert_upload_success', { filename: data.filename }));
-                } else {
-                    alert(t('alert_upload_fail'));
-                }
+                })
+                .then(res => {
+                    if (res.ok) {
+                        return res.json().then(data => {
+                            alert(t('alert_upload_success', { filename: data.filename }));
+                        });
+                    } else {
+                        alert(t('alert_upload_fail'));
+                    }
+                })
+                .catch(e => console.error(e));
             } catch (e) {
                 console.error(e);
             }
         }
-
-        // Timeline Categories Definition
-        const TIMELINE_CATEGORIES = [
-            { id: "0_birth", title_en: "0. Birth", title_zh: "0. 出生" },
-            { id: "1_early_childhood", title_en: "1. Early Childhood (0-6)", title_zh: "1. 0~6岁经历" },
-            { id: "2_primary_edu", title_en: "2. Primary/Secondary Edu", title_zh: "2. 中小学教育经历" },
-            { id: "3_higher_edu", title_en: "3. Higher Education", title_zh: "3. 大学以后教育经历" },
-            { id: "4_family", title_en: "4. Family Relations", title_zh: "4. 家庭关系" },
-            { id: "5_social", title_en: "5. Social Relations", title_zh: "5. 社会关系" },
-            { id: "6_work", title_en: "6. Work History", title_zh: "6. 工作情况" },
-            { id: "7_locations", title_en: "7. Locations", title_zh: "7. 居住地/工作地/曾经生活地" },
-            { id: "8_assets", title_en: "8. Assets", title_zh: "8. 财产情况" }
-        ];
-        
-        let timelineData = {};
 
         // Recording Logic
         let mediaRecorder;
