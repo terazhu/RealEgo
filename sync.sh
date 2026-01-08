@@ -138,6 +138,10 @@ sync_files() {
     local rsync_output="/tmp/rsync_output_$$"
     
     # 捕获输出以判断是否有更新
+    # 增加过滤：
+    # --exclude='.env'  : 排除环境配置文件
+    # --exclude='*.log' : 排除所有日志文件
+    # --exclude='server_id' : 排除可能存在的服务器标识文件
     rsync -avz --delete \
         --exclude='.git/' \
         --exclude='.DS_Store' \
@@ -147,6 +151,21 @@ sync_files() {
         --exclude='__pycache__/' \
         --exclude='*.pyc' \
         --exclude='node_modules/' \
+        --exclude='.env' \
+        --exclude='*.log' \
+        --exclude='server.id' \
+        --include='*/' \
+        --include='*.py' \
+        --include='*.js' \
+        --include='*.html' \
+        --include='*.css' \
+        --include='*.sh' \
+        --include='*.md' \
+        --include='*.json' \
+        --include='*.yaml' \
+        --include='*.yml' \
+        --include='*.txt' \
+        --exclude='*' \
         -e "$ssh_cmd" \
         "${LOCAL_DIR}/" \
         "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/" \
