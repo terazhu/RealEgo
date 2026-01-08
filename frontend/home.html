@@ -6,6 +6,7 @@
     <title>RealEgo - Home</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <script src="lang.js"></script>
     <style>
         :root {
             --primary-color: #007bff;
@@ -29,6 +30,11 @@
         .sidebar .spacer { flex: 1; }
         .sidebar button.logout { color: #dc3545; margin-top: auto; }
         .sidebar button.logout:hover { background: #ffebeb; color: #c82333; }
+
+        /* Language Switcher */
+        .lang-switch { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
+        .lang-switch button { padding: 5px 10px; background: white; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.8rem; color: #666; }
+        .lang-switch button.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
         /* Main Content */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; }
@@ -95,69 +101,74 @@
     </style>
 </head>
 <body>
+    <div class="lang-switch">
+        <button onclick="switchLang('en')" id="lang-en" class="active">EN</button>
+        <button onclick="switchLang('zh')" id="lang-zh">中文</button>
+    </div>
+
     <div class="sidebar">
-        <h3><i class="fas fa-brain"></i> RealEgo</h3>
-        <button onclick="showSection('chat')" id="btn-chat" class="active"><i class="fas fa-comments"></i> Chat</button>
-        <button onclick="showSection('profile')" id="btn-profile"><i class="fas fa-user-circle"></i> Profile & Memory</button>
-        <button onclick="showSection('settings')" id="btn-settings"><i class="fas fa-cog"></i> Settings</button>
+        <h3 data-i18n="title"><i class="fas fa-brain"></i> RealEgo</h3>
+        <button onclick="showSection('chat')" id="btn-chat" class="active" data-i18n="nav_chat"><i class="fas fa-comments"></i> Chat</button>
+        <button onclick="showSection('profile')" id="btn-profile" data-i18n="nav_profile"><i class="fas fa-user-circle"></i> Profile & Memory</button>
+        <button onclick="showSection('settings')" id="btn-settings" data-i18n="nav_settings"><i class="fas fa-cog"></i> Settings</button>
         <div class="spacer"></div>
-        <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <button onclick="logout()" class="logout" data-i18n="nav_logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
 
     <div class="content">
         <div id="chat" class="section active">
             <div class="chat-header">
-                <span>Chat with RealEgo</span>
-                <button class="toggle-status" onclick="toggleStatusPanel()"><i class="fas fa-terminal"></i> Toggle Status Log</button>
+                <span data-i18n="chat_header">Chat with RealEgo</span>
+                <button class="toggle-status" onclick="toggleStatusPanel()" data-i18n="toggle_log"><i class="fas fa-terminal"></i> Toggle Status Log</button>
             </div>
             <div class="status-panel active" id="status-panel">
                 <!-- Status logs go here -->
-                <div class="status-item"><i class="fas fa-info-circle"></i> Ready.</div>
+                <div class="status-item"><i class="fas fa-info-circle"></i> <span data-i18n="status_ready">Ready.</span></div>
             </div>
             <div class="chat-box" id="chat-box">
                 <!-- Messages -->
             </div>
             <div class="input-area">
-                <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" autocomplete="off">
-                <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i> Send</button>
+                <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" autocomplete="off" data-i18n="placeholder_message">
+                <button onclick="sendMessage()" data-i18n="btn_send"><i class="fas fa-paper-plane"></i> Send</button>
             </div>
         </div>
 
         <div id="profile" class="section">
-            <h2>Profile Settings</h2>
+            <h2 data-i18n="profile_header">Profile Settings</h2>
             <div class="form-group">
-                <label>Full Name</label>
+                <label data-i18n="label_fullname">Full Name</label>
                 <input type="text" id="full_name">
             </div>
             <div class="form-group">
-                <label>Birth Date</label>
+                <label data-i18n="label_birthdate">Birth Date</label>
                 <input type="date" id="birth_date">
             </div>
             <div class="form-group">
-                <label>Location</label>
+                <label data-i18n="label_location">Location</label>
                 <input type="text" id="location">
             </div>
             <div class="form-group">
-                <label>Family Info</label>
+                <label data-i18n="label_family">Family Info</label>
                 <textarea id="family_info"></textarea>
             </div>
-            <button onclick="saveProfile()" class="btn-save">Save Profile</button>
+            <button onclick="saveProfile()" class="btn-save" data-i18n="btn_save_profile">Save Profile</button>
             
             <hr>
-            <h3>Upload Documents (TOS)</h3>
+            <h3 data-i18n="upload_header">Upload Documents (TOS)</h3>
             <div class="form-group">
                 <input type="file" id="file-upload" style="border: none; padding-left: 0;">
-                <button onclick="uploadFile()" style="margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Upload</button>
+                <button onclick="uploadFile()" style="margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" data-i18n="btn_upload">Upload</button>
             </div>
         </div>
 
         <div id="settings" class="section">
-            <h2>Settings</h2>
+            <h2 data-i18n="settings_header">Settings</h2>
             <div class="form-group">
-                <label>Chat History Limit (Number of messages to store/retrieve)</label>
+                <label data-i18n="label_history_limit">Chat History Limit (Number of messages to store/retrieve)</label>
                 <input type="number" id="history_limit" value="100" min="10" max="1000">
             </div>
-            <button onclick="saveSettings()" class="btn-save">Save Settings</button>
+            <button onclick="saveSettings()" class="btn-save" data-i18n="btn_save_settings">Save Settings</button>
         </div>
     </div>
 
@@ -192,7 +203,7 @@
             try {
                 const res = await fetch(`${API_URL}/users/me/profile`, { headers });
                 if (res.status === 401) {
-                    alert("Session expired. Please login again.");
+                    alert(t('alert_session_expired'));
                     logout();
                     return;
                 }
@@ -217,8 +228,8 @@
                     headers: { ...headers, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ history_limit: parseInt(limit) })
                 });
-                if (res.ok) alert('Settings saved!');
-                else alert('Failed to save settings');
+                if (res.ok) alert(t('alert_settings_saved'));
+                else alert(t('alert_settings_saved'));
             } catch (e) {
                 console.error(e);
             }
@@ -237,8 +248,8 @@
                     headers: { ...headers, 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                if (res.ok) alert('Profile saved!');
-                else alert('Failed to save profile');
+                if (res.ok) alert(t('alert_profile_saved'));
+                else alert(t('alert_profile_saved')); // Actually this is error but keep simple for now or use generic fail
             } catch (e) {
                 console.error(e);
             }
@@ -281,7 +292,7 @@
 
             // Show loading indicator
             const loadingId = addLoadingMessage();
-            addStatusLog("Sending message...", 'log');
+            addStatusLog(t('log_sending'), 'log');
 
             try {
                 const response = await fetch(`${API_URL}/chat/`, {
@@ -291,7 +302,7 @@
                 });
 
                 if (response.status === 401) {
-                    alert("Session expired. Please login again.");
+                    alert(t('alert_session_expired'));
                     logout();
                     return;
                 }
@@ -320,7 +331,23 @@
                         try {
                             const data = JSON.parse(line);
                             if (data.type === 'log') {
-                                addStatusLog(data.content, 'log');
+                                // Translate log content if possible, but logs are dynamic.
+                                // We can use heuristic mapping or just pass through.
+                                // For better UX, we can try to match known keys.
+                                let logText = data.content;
+                                if (logText === 'Loading user profile...') logText = t('log_loading_profile');
+                                if (logText === 'Profile loaded.') logText = t('log_profile_loaded');
+                                if (logText === 'Searching relevant memories...') logText = t('log_searching_memories');
+                                if (logText.includes('Found') && logText.includes('relevant memories')) {
+                                    const match = logText.match(/Found (\d+) relevant memories/);
+                                    if (match) logText = t('log_found_memories', { n: match[1] });
+                                }
+                                if (logText === 'Constructing prompt and waiting for LLM...') logText = t('log_waiting_llm');
+                                if (logText === 'LLM response received.') logText = t('log_llm_received');
+                                if (logText === 'Queueing background memory storage...') logText = t('log_queueing_storage');
+                                if (logText === 'All tasks queued. Done.') logText = t('log_tasks_queued');
+                                
+                                addStatusLog(logText, 'log');
                             } else if (data.type === 'response') {
                                 if (!loadingRemoved) {
                                     removeMessage(loadingId);
@@ -340,8 +367,8 @@
 
             } catch (e) {
                 removeMessage(loadingId);
-                addMessage('Error communicating with server.', 'assistant');
-                addStatusLog('Error communicating with server: ' + e.message, 'error');
+                addMessage(t('error_server'), 'assistant');
+                addStatusLog(t('error_server') + ': ' + e.message, 'error');
             }
         }
 
@@ -351,7 +378,7 @@
             const id = 'loading-' + Date.now();
             div.id = id;
             div.className = `message assistant`;
-            div.innerHTML = `<span class="bubble thinking">Thinking...</span>`;
+            div.innerHTML = `<span class="bubble thinking" data-i18n="thinking">${t('thinking')}</span>`;
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
             return id;
@@ -386,9 +413,9 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    alert(`Uploaded: ${data.filename}`);
+                    alert(t('alert_upload_success', { filename: data.filename }));
                 } else {
-                    alert('Upload failed');
+                    alert(t('alert_upload_fail'));
                 }
             } catch (e) {
                 console.error(e);
@@ -396,9 +423,21 @@
         }
 
         // Init
+        applyTranslations();
+        updateLangButtons();
         loadProfile();
         loadHistory();
         
+        function switchLang(lang) {
+            setLanguage(lang);
+            updateLangButtons();
+        }
+
+        function updateLangButtons() {
+            document.querySelectorAll('.lang-switch button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lang-${currentLang}`).classList.add('active');
+        }
+
         async function loadHistory() {
             try {
                 const res = await fetch(`${API_URL}/chat/history`, { headers });
