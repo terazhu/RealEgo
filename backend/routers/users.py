@@ -13,7 +13,8 @@ async def update_profile_voice(file: UploadFile = File(...), current_user: model
     current_timeline = json.loads(profile.timeline_data) if profile.timeline_data else {}
     
     # Process audio
-    text, json_str = llm_service.process_voice_profile(file.file, current_timeline)
+    # llm_service is now async
+    text, json_str = await llm_service.process_voice_profile(file.file, current_timeline)
     
     if not text:
         raise HTTPException(status_code=500, detail=f"Voice processing failed: {json_str}")
