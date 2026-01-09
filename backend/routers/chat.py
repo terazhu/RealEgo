@@ -63,19 +63,35 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
             yield json.dumps({"type": "log", "content": "LLM response stream started."}) + "\n"
             
             full_response = ""
+            first_chunk_received = False
             async for chunk in completion:
+                # Force flush immediately at start of loop to ensure previous log is sent
+                # Note: 'yield' in FastAPI streaming response usually pushes to network buffer.
+                # If we want to ensure it goes out, we rely on the server/client not buffering.
+                
                 if chunk.choices and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
+                    
+                    if not first_chunk_received:
+                        first_chunk_received = True
+                        yield json.dumps({"type": "log", "content": "First token received from LLM."}) + "\n"
+                        # Force a small pause/yield to ensure the log packet is flushed separately
+                        # This is a hack for some buffering proxies, but also helps browser UI render the log
+                        # before the first text chunk if they arrive in same packet.
+                        await asyncio.sleep(0.01) 
+
                     full_response += content
                     # Send partial chunk
                     yield json.dumps({"type": "response_chunk", "content": content}) + "\n"
             
             yield json.dumps({"type": "log", "content": "LLM response complete."}) + "\n"
             
-            # 4. Background Tasks (Log them as queued)
+            # 4. Background Tasks
             yield json.dumps({"type": "log", "content": "Queueing background memory storage..."}) + "\n"
             
-            # Save assistant message
+            # Use asyncio.create_task for true non-blocking background work in async handler
+            # FastAPI's background_tasks might run after the response closes, which is fine,
+            # but here we want to log that we are done queueing.
             background_tasks.add_task(crud.create_chat_message, db, current_user.id, "assistant", full_response)
             
             # Add to memory (Async call in background task might need wrapper or sync method?)
