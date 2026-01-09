@@ -44,6 +44,7 @@ def init_db():
                 conn.execute(text("SELECT 1 FROM profiles LIMIT 1"))
                 
                 # If table exists, check for columns
+                # Check for history_limit
                 try:
                     conn.execute(text("SELECT history_limit FROM profiles LIMIT 1"))
                     print("'history_limit' column already exists.")
@@ -51,6 +52,15 @@ def init_db():
                     print("'history_limit' column missing. Adding it...")
                     conn.execute(text("ALTER TABLE profiles ADD COLUMN history_limit INT DEFAULT 100"))
                     print("Added 'history_limit' column to 'profiles' table.")
+                
+                # Check for timeline_data
+                try:
+                    conn.execute(text("SELECT timeline_data FROM profiles LIMIT 1"))
+                    print("'timeline_data' column already exists.")
+                except Exception:
+                    print("'timeline_data' column missing. Adding it...")
+                    conn.execute(text("ALTER TABLE profiles ADD COLUMN timeline_data TEXT"))
+                    print("Added 'timeline_data' column to 'profiles' table.")
             except Exception:
                 print("'profiles' table does not exist yet. Will be created.")
 
