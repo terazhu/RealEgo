@@ -47,39 +47,28 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
                 }
             yield json.dumps({"type": "log", "content": "Profile loaded."}) + "\n"
 
-            # 2. Search Memory (Simulated separate step for visualization, though LLM service does it)
-            # Actually, to show it properly, we should probably refactor LLM service to expose this, 
-            # or just log it here as if we are doing it.
-            # Let's peek into mem0 service manually to show the log, then pass to LLM service.
-            # OR just fake the log sequence if it happens fast inside llm_service.
-            # Ideally, we call mem0 search here explicitly.
-            
+            # 2. Search Memory
+            # Now explicitly showing the search step and waiting for it
             yield json.dumps({"type": "log", "content": "Searching relevant memories..."}) + "\n"
-            # We can't easily split llm_service.chat without refactoring it heavily. 
-            # For now, we will log it, and let llm_service do its job.
-            # Or better: let's do the search here to show the count!
-            memories = mem0_service.search_memory(request.message, str(current_user.id))
+            memories = await mem0_service.search_memory(request.message, str(current_user.id))
             mem_count = len(memories) if memories else 0
             yield json.dumps({"type": "log", "content": f"Found {mem_count} relevant memories."}) + "\n"
 
             # 3. Call LLM
             yield json.dumps({"type": "log", "content": "Constructing prompt and waiting for LLM..."}) + "\n"
             
-            # Use streaming chat
-            completion = llm_service.chat(request.message, str(current_user.id), profile_dict, stream=True)
+            # Use streaming chat (Async)
+            completion = await llm_service.chat(request.message, str(current_user.id), profile_dict, stream=True)
             
             yield json.dumps({"type": "log", "content": "LLM response stream started."}) + "\n"
             
             full_response = ""
-            for chunk in completion:
+            async for chunk in completion:
                 if chunk.choices and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
                     # Send partial chunk
                     yield json.dumps({"type": "response_chunk", "content": content}) + "\n"
-                
-                # Yield a small delay/noop if needed to force flush in some envs, but usually not needed with NDJSON
-                # await asyncio.sleep(0) # Not async here, blocking loop
             
             yield json.dumps({"type": "log", "content": "LLM response complete."}) + "\n"
             
@@ -89,7 +78,9 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
             # Save assistant message
             background_tasks.add_task(crud.create_chat_message, db, current_user.id, "assistant", full_response)
             
-            # Add to memory
+            # Add to memory (Async call in background task might need wrapper or sync method?)
+            # BackgroundTasks runs in threadpool for sync, or event loop for async?
+            # FastAPI BackgroundTasks supports async def.
             background_tasks.add_task(mem0_service.add_memory, f"User: {request.message}\nAssistant: {full_response}", str(current_user.id))
             
             yield json.dumps({"type": "log", "content": "All tasks queued. Done."}) + "\n"

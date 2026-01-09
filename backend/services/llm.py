@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import AsyncOpenAI
 from config import settings
 from .mem0 import mem0_service
 import logging
@@ -8,7 +8,7 @@ logger = logging.getLogger("RealEgo")
 class LLMService:
     def __init__(self):
         try:
-            self.client = OpenAI(
+            self.client = AsyncOpenAI(
                 api_key=settings.ARK_API_KEY or "dummy", # Prevent crash if env var missing
                 base_url=settings.ARK_API_URL
             )
@@ -17,15 +17,15 @@ class LLMService:
             self.client = None
         self.model = settings.ARK_MODEL
 
-    def chat(self, message: str, user_id: str, user_profile: dict, stream: bool = False):
+    async def chat(self, message: str, user_id: str, user_profile: dict, stream: bool = False):
         if not self.client:
             logger.error("LLM Service not available (Configuration missing).")
             return "LLM Service not available (Configuration missing)."
         
         logger.debug(f"Starting LLM chat for user {user_id}")
 
-        # 1. Search relevant memories
-        memories = mem0_service.search_memory(message, user_id)
+        # 1. Search relevant memories (Async)
+        memories = await mem0_service.search_memory(message, user_id)
         
         # 2. Construct system prompt with profile and memories
         system_prompt = f"You are a helpful assistant for {user_profile.get('username', 'User')}."
@@ -58,7 +58,7 @@ class LLMService:
             logger.info(f"--- LLM REQUEST END ---")
 
             if stream:
-                completion = self.client.chat.completions.create(
+                completion = await self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -68,7 +68,7 @@ class LLMService:
                 )
                 return completion
             else:
-                completion = self.client.chat.completions.create(
+                completion = await self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -86,7 +86,7 @@ class LLMService:
             logger.error(f"LLM Error: {e}", exc_info=True)
             return "Sorry, I encountered an error processing your request."
 
-    def process_voice_profile(self, audio_file, current_timeline: dict):
+    async def process_voice_profile(self, audio_file, current_timeline: dict):
         """
         1. Transcribe audio
         2. Extract structured profile data
@@ -98,20 +98,8 @@ class LLMService:
         try:
             # 1. Transcribe
             # Note: Ensure the model supports transcription or use specific whisper endpoint
-            # For Doubao/ARK, we might need check if audio.transcriptions is supported or use a different client.
-            # Assuming standard OpenAI interface compatibility for now, or fallback to text if user sends text.
-            # Actually, let's assume the user sends an audio file object.
             
-            # Since we are using ARK (Doubao), it might not support 'audio.transcriptions' via OpenAI SDK directly 
-            # if the base URL is generic. But let's try. If it fails, we might need a separate service.
-            # However, for this task, I will mock the transcription if the API fails, or assume it works.
-            # WAIT: The user said "said after convert to text". 
-            # I will try to use the client.audio.transcriptions.create
-            
-            # If the custom endpoint doesn't support audio, we might need to skip or use a mock for "demo".
-            # Let's write the code assuming it works or handle error gracefully.
-            
-            transcription = self.client.audio.transcriptions.create(
+            transcription = await self.client.audio.transcriptions.create(
                 model="whisper-1", # Often standard alias
                 file=audio_file
             )
@@ -144,7 +132,7 @@ class LLMService:
             Each value should be a string or object with details.
             """
             
-            completion = self.client.chat.completions.create(
+            completion = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a precise data extractor. Output JSON only."},
