@@ -28,8 +28,8 @@ async def get_history(current_user: models.User = Depends(auth.get_current_user)
 async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     logger.info(f"Received chat request from user {current_user.username}: {request.message}")
     
-    # Save user message (Background)
-    background_tasks.add_task(crud.create_chat_message, db, current_user.id, "user", request.message)
+    # Save user message (Synchronous to ensure order and existence before reply)
+    crud.create_chat_message(db, current_user.id, "user", request.message)
 
     async def event_generator():
         try:
@@ -95,4 +95,9 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
             logger.error(f"Error in chat stream: {e}")
             yield json.dumps({"type": "error", "content": str(e)}) + "\n"
 
-    return StreamingResponse(event_generator(), media_type="application/x-ndjson", background=background_tasks)
+    return StreamingResponse(
+        event_generator(), 
+        media_type="application/x-ndjson", 
+        background=background_tasks,
+        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"}
+    )
