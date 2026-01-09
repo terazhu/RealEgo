@@ -77,6 +77,9 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
                     full_response += content
                     # Send partial chunk
                     yield json.dumps({"type": "response_chunk", "content": content}) + "\n"
+                
+                # Yield a small delay/noop if needed to force flush in some envs, but usually not needed with NDJSON
+                # await asyncio.sleep(0) # Not async here, blocking loop
             
             yield json.dumps({"type": "log", "content": "LLM response complete."}) + "\n"
             

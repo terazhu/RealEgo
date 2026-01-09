@@ -69,10 +69,11 @@ def create_chat_message(db: Session, user_id: int, role: str, content: str):
 
 def get_chat_history(db: Session, user_id: int, limit: int = 100):
     try:
-        # Get last N messages, ordered by timestamp desc, then reversed to show in chronological order
+        # Get last N messages, ordered by ID desc (newest first), then reversed
+        # Using ID instead of timestamp guarantees correct order for messages created in the same second
         messages = db.query(models.ChatMessage)\
             .filter(models.ChatMessage.user_id == user_id)\
-            .order_by(models.ChatMessage.timestamp.desc())\
+            .order_by(models.ChatMessage.id.desc())\
             .limit(limit)\
             .all()
         return list(reversed(messages))
