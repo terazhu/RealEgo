@@ -94,10 +94,13 @@ async def chat(request: schemas.ChatRequest, background_tasks: BackgroundTasks, 
             # but here we want to log that we are done queueing.
             background_tasks.add_task(crud.create_chat_message, db, current_user.id, "assistant", full_response)
             
-            # Add to memory (Async call in background task might need wrapper or sync method?)
-            # BackgroundTasks runs in threadpool for sync, or event loop for async?
-            # FastAPI BackgroundTasks supports async def.
-            background_tasks.add_task(mem0_service.add_memory, f"User: {request.message}\nAssistant: {full_response}", str(current_user.id))
+            # Add to memory (Async call in background task)
+            # We construct the message list as Mem0 expects
+            memory_messages = [
+                {"role": "user", "content": request.message},
+                {"role": "assistant", "content": full_response}
+            ]
+            background_tasks.add_task(mem0_service.add_memory, memory_messages, str(current_user.id))
             
             yield json.dumps({"type": "log", "content": "All tasks queued. Done."}) + "\n"
 

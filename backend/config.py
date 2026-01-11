@@ -17,7 +17,7 @@ class Settings:
     TOS_BUCKET = "realego-data" # Will use a specific bucket name
 
     # Mem0
-    MEM0_API_URL = "https://mem0-cnlfjzigaku8gczkzo.mem0.volces.com"
+    MEM0_API_URL = "https://mp-cnlfuzsxoqiw9z9gzpw8swn6bobu.mem0.ivolces.com:8000"
     MEM0_API_KEY = os.getenv("MEM_KEY", "95af5d48-a629-5cdb-b914-341ae85313a6")
 
     # LLM (ARK)

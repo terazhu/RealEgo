@@ -1,50 +1,47 @@
-import httpx
+from mem0 import MemoryClient
 from config import settings
 import logging
+import asyncio
+from functools import partial
 
 logger = logging.getLogger("RealEgo")
 
 class Mem0Service:
     def __init__(self):
-        self.api_url = settings.MEM0_API_URL
-        self.api_key = settings.MEM0_API_KEY
-        self.headers = {
-            "Authorization": f"Token {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        self.client = MemoryClient(
+            host=settings.MEM0_API_URL,
+            api_key=settings.MEM0_API_KEY
+        )
 
-    async def add_memory(self, content: str, user_id: str):
-        # Using mem0 API to add memory
-        url = f"{self.api_url}/v1/memories/"
-        data = {
-            "messages": [{"role": "user", "content": content}],
-            "user_id": str(user_id)
-        }
+    async def add_memory(self, messages: list, user_id: str):
+        """
+        Add memory asynchronously (non-blocking for the event loop).
+        messages: List of dicts, e.g. [{"role": "user", "content": "..."}, ...]
+        """
+        loop = asyncio.get_running_loop()
         try:
-            logger.info(f"Adding memory to Mem0: {url}, data: {data}")
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=data, headers=self.headers, timeout=5.0)
-                response.raise_for_status()
-                logger.info(f"Memory added successfully: {response.json()}")
-                return response.json()
+            # async_mode=True tells the Mem0 server to process this as a background job
+            func = partial(self.client.add, messages, user_id=user_id, async_mode=True)
+            result = await loop.run_in_executor(None, func)
+            logger.info(f"Memory add job submitted: {result}")
+            return result
         except Exception as e:
             logger.error(f"Error adding memory: {e}")
             return None
 
     async def search_memory(self, query: str, user_id: str):
-        url = f"{self.api_url}/v1/memories/search/"
-        data = {
-            "query": query,
-            "user_id": str(user_id)
-        }
+        """
+        Search memory asynchronously (non-blocking for the event loop).
+        Returns a list of memory items.
+        """
+        loop = asyncio.get_running_loop()
         try:
-            logger.info(f"Searching memory in Mem0: {url}, data: {data}")
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=data, headers=self.headers, timeout=5.0)
-                response.raise_for_status()
-                result = response.json()
-                logger.info(f"Memory search result: {result}")
-                return result
+            func = partial(self.client.search, query, user_id=user_id)
+            result = await loop.run_in_executor(None, func)
+            # Ensure we return a list. result is typically {'results': [...]}
+            if isinstance(result, dict):
+                return result.get("results", [])
+            return result if isinstance(result, list) else []
         except Exception as e:
             logger.error(f"Error searching memory: {e}")
             return []

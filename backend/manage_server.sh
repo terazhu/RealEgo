@@ -3,7 +3,7 @@
 # Configuration
 APP_MODULE="main:app"
 HOST="0.0.0.0"
-PORT="8080"
+PORT="80"
 SSL_KEY="key.pem"
 SSL_CERT="cert.pem"
 PID_FILE="server.pid"
@@ -25,12 +25,12 @@ start() {
 
     echo "Starting server..."
     # Check if SSL files exist
-    if [ -f "$SSL_KEY" ] && [ -f "$SSL_CERT" ]; then
-        nohup uvicorn $APP_MODULE --host $HOST --port $PORT --ssl-keyfile $SSL_KEY --ssl-certfile $SSL_CERT > $LOG_FILE 2>&1 &
-    else
-        echo "SSL files not found, starting without SSL..."
+    # if [ -f "$SSL_KEY" ] && [ -f "$SSL_CERT" ]; then
+    #    nohup uvicorn $APP_MODULE --host $HOST --port $PORT --ssl-keyfile $SSL_KEY --ssl-certfile $SSL_CERT > $LOG_FILE 2>&1 &
+    # else
+        echo "Starting without SSL (HTTP mode)..."
         nohup uvicorn $APP_MODULE --host $HOST --port $PORT > $LOG_FILE 2>&1 &
-    fi
+    # fi
     
     echo $! > $PID_FILE
     echo "Server started with PID $(cat $PID_FILE). Logs: $LOG_FILE"
